@@ -1,0 +1,375 @@
+---
+title: "Flash Vendas"
+output: 
+  flexdashboard::flex_dashboard:
+    css: bootswatch-3.3.5-4 / bootstrap / bootstrap.css
+    orientation: rows
+    vertical_layout: fill
+runtime: shiny
+---
+
+<style>                     
+.navbar {
+  background-color:black;
+  border-color:black;
+}
+.navbar-brand {
+color:white!important;
+}
+</style>
+
+```{r global, include=FALSE}
+library(dplyr)
+library(flexdashboard)
+library(shinydashboard)
+library(shiny)
+library(plotly)
+library(ggplot2)
+library(DT)
+library(devtools)
+library(formattable)
+library(manipulateWidget)
+source("data.R")
+```
+
+```{r}
+
+tabela = function(itens, dom = 'ft'){
+                                      datatable(data = itens, 
+                                                rownames = FALSE, 
+                                                options = list ( dom = dom,
+                                                            initComplete = JS (  "function(settings, json) {" ,             "$(this.api().table().header()).css({'background-color': '#0c9c7bff',
+                                           'color': '#fff'});" ,  "}" ),
+                                               compact=TRUE,
+                                               class = "compact" ) )                     
+                                    }
+
+acumulado = function(new, aux){
+                       i = 1
+                       soma = 0
+                       n = length(new)
+                       for(i in 1:n ){
+                                        new[i] = aux[i] + soma
+                                        soma = new[i]
+                                      }  
+                       print(new)
+                       } 
+
+
+```
+
+
+
+Dashboard {data-icon="fa-tachometer"}
+======================================================================
+Row {data-height=350}
+-----------------------------------------------------------------------
+
+
+```{r}
+selectInput(inputId = "filtro_ano", "Ano", choices = unique(dados$ano), selected = "NA")
+selectInput(inputId = "filtro_mes", "Mês", choices = unique(dados$mes))
+selectInput(inputId = "filtro_dia", "Dia", choices = unique(dados$dia))
+selectInput(inputId = "filtro_supervisor", "Supervisor", choices = unique(dados$NomeSupervisor))
+selectInput(inputId = "filtro_loja", "Loja", choices = unique(dados$NomeLoja) )
+
+
+
+
+```
+
+
+
+Row {data-width=500}
+-----------------------------------------------------------------------
+
+### Qtd. Tickets {.value-box}
+
+```{r}
+df = dados %>% filter(TipoCupom == 'Troca') %>% select(TicketPK) %>% unique()
+df = length(unique(dados$TicketPK)) - length(df$TicketPK)
+flexdashboard::valueBox(df, 
+                        caption = "Qtd. Tickets",
+                        color = "#0082bfff",
+                        icon = "fa-tags")
+
+
+```
+
+
+### Qtd. Peças {.value-box}
+```{r}
+df = sum(dados$`Qtd. Venda`) - sum(dados$`Qtd. Troca`)
+flexdashboard::valueBox(df, 
+                        caption = "Qtd. Peças",
+                        color = "#ff4242ff",
+                        icon = "fa-tshirt")
+
+```
+
+
+###  Ticket Médio {.value-box}
+```{r}
+df = sum(dados$TicketMedio)
+df = paste('R$', df , sep = ' ')
+
+
+  
+flexdashboard::valueBox(df, 
+                        caption = "Ticket Médio",
+                        color = "#0c9c7bff",
+                        icon = "fa-tag")
+
+
+```
+
+###  Venda Loja {.value-box}
+```{r}
+df = sum(dados$VendaLoja)
+df = paste('R$', df , sep = ' ')
+
+flexdashboard::valueBox(df, 
+                        caption = "Venda Loja",
+                        color = "#8080c0ff",
+                        icon = "fa-shopping-cart")
+
+```
+
+###  Venda OMNI {.value-box}
+```{r}
+
+df =  sum(dados$ValorOMNI)
+df = paste('R$', df , sep = ' ')
+
+flexdashboard::valueBox(df, 
+                        caption = "Venda OMNI",
+                        color = "#ff8040ff",
+                        icon = "fa-money-bill-wave")
+
+
+
+```
+
+
+
+
+
+Row {data-height=1350}
+-------------------------------------
+    
+### Venda Loja por Hora
+```{r}
+
+df = dados %>% group_by(Hora) %>% summarise(total = currency(sum(VendaLoja)), Meta = sum(Meta))
+    
+    plot_ly(df, x = ~Hora, y = ~total,
+        color = 'green',
+        type = 'scatter', 
+        mode = 'lines+markers',
+        line = list(color = 'green')) %>%
+    
+  layout(title = "",
+                 yaxis = list(title = "Venda Loja (R$)"),
+                 xaxis = list(title = "Hora"),
+                 legend = list(x = 5, y = 12),
+                 hovermode = "compare"
+         )
+    
+
+```
+
+### Ticket Médio por hora
+```{r}
+df = dados %>% group_by(Hora) %>% summarise(total = currency(sum(VendaLoja)), Meta = sum(Meta))
+    
+    plot_ly(df, x = ~Hora, y = ~total,
+        color = 'green',
+        type = 'scatter', 
+        mode = 'lines+markers',
+        line = list(color = 'green')) %>%
+    
+  layout(title = "",
+                 yaxis = list(title = "Ticket Médio (R$)"),
+                 xaxis = list(title = "Hora"),
+                 legend = list(x = 5, y = 12),
+                 hovermode = "compare"
+         )
+
+
+```
+
+
+Row {data-height=1350}
+-------------------------------------
+    
+### Valor Total acumulado X Meta
+```{r}
+df = dados %>% group_by(Hora) %>% 
+            summarise( aux = sum(VendaTotal),
+                       total = 0 ,
+                       Meta = sum(Meta) )
+
+df$total = acumulado( new = df$total, aux = df$aux  )
+
+plot_ly(df, x = ~Hora, y = ~total,
+        color = 'green',
+        type = 'scatter', 
+        mode = 'lines+markers',
+        line = list(color = 'green')) %>%
+    
+  layout(title = "",
+                 yaxis = list(title = "Venda Total Acumulada(R$)"),
+                 xaxis = list(title = "Hora"),
+                 legend = list(x = 5, y = 12),
+                 hovermode = "compare"
+         )
+
+
+```
+
+### (%) Meta por Loja
+```{r}
+```
+
+### Tabela
+```{r}
+df = dados %>%
+  select(NomeLoja, ValorVenda, Meta, ValorTroca) %>%
+  group_by(NomeLoja) %>%
+  summarise('Total Venda'=sum(ValorVenda),
+            'Meta'=sum(Meta),
+            'Total Troca'=sum(ValorTroca)
+            )
+tabela(df, dom = 't')
+
+
+```
+
+
+Sintético {data-icon="fa-table"}
+======================================================================
+
+Row 
+-----------------------------------------------------------------------
+
+```{r}
+selectInput("filtro_ano", "Ano", choices = unique(dados$ano))
+selectInput("filtro_mes", "Mês", choices = unique(dados$mes))
+selectInput("filtro_dia", "Dia", choices = unique(dados$dia))
+selectInput("filtro_supervisor", "Supervisor", choices = unique(dados$NomeSupervisor))
+selectInput("filtro_loja", "Loja", choices = unique(dados$NomeLoja) )
+```
+
+
+
+
+Row {data-height=1750}
+-----------------------------------------------------------------------
+
+### Lojas
+```{r}
+df = dados %>%
+  select(LojaPK, NomeLoja, TicketMedio, TipoCupom, ValorVenda, ValorOMNI, VendaTotal) %>%
+  group_by(LojaPK, NomeLoja) %>%
+  summarise('Total Venda'=sum(ValorVenda),
+            'Total OMNI'=sum(ValorOMNI),
+            'Total'=sum(VendaTotal)
+            )
+
+tabela(df)
+```
+
+### Vendedores
+```{r}
+df = dados %>%
+  select(NomeVendedor, TicketMedio, TipoCupom, ValorVenda, ValorOMNI, VendaTotal) %>%
+  group_by(NomeVendedor) %>%
+  summarise('Total Venda'=sum(ValorVenda),
+            'Total OMNI'=sum(ValorOMNI),
+            'Total'=sum(VendaTotal)
+            )
+tabela(df)
+
+
+```
+
+
+Row {data-height=1750}
+-----------------------------------------------------------------------
+
+### Clientes
+```{r}
+df = dados %>%
+  select(NomeCliente, ValorVenda) %>%
+  group_by(NomeCliente) %>%
+  summarise('Total Venda'=sum(ValorVenda)
+            
+            )
+tabela(df)
+
+
+```
+
+### Produtos
+```{r}
+df = dados %>%
+  select(ProdutoPK, Produto, TicketMedio, ValorVenda) %>%
+  group_by(ProdutoPK, Produto) %>%
+  summarise('Total Venda'=sum(ValorVenda)
+            
+            )
+tabela(df)
+
+
+```
+
+
+Analitíco {data-icon="fa-list-alt"}
+======================================================================
+Row 
+-----------------------------------------------------------------------
+
+
+
+```{r}
+selectInput("filtro_ano", "Ano", choices = unique(dados$ano))
+selectInput("filtro_mes", "Mês", choices = unique(dados$mes))
+selectInput("filtro_dia", "Dia", choices = unique(dados$dia))
+selectInput("filtro_supervisor", "Supervisor", choices = unique(dados$NomeSupervisor))
+selectInput("filtro_loja", "Loja", choices = unique(dados$NomeLoja) )
+```
+
+
+
+Row {data-height=3500}
+-----------------------------------------------------------------------
+
+### Tabela 
+
+```{r}
+df = dados %>%
+  select(NomeLoja, TicketMedio, TipoCupom, ValorVenda, ValorOMNI, VendaTotal, Meta, perc_Meta, HoraCompleta) %>%
+  group_by(NomeLoja) %>%
+  summarise('Total Venda'=sum(ValorVenda),
+            'Total OMNI'=sum(ValorOMNI),
+            'Total'=sum(VendaTotal),
+            'Meta' = sum(Meta),
+            'Diferença Meta' = sum(VendaTotal) - sum(Meta),
+            '% Meta' = sum(perc_Meta),
+            'Última Venda' = max(HoraCompleta)
+            
+            
+            
+            )
+tabela(df)
+
+```
+
+Modelo {data-icon="fa-photo"}
+======================================================================
+Columns
+-----------------------------------------------------------------------
+
+```{r pressure, echo=FALSE, out.width = '100%'}
+knitr::include_graphics("modelo.png")
+```
