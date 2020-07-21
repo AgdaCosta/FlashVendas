@@ -2,4 +2,4 @@
 Dashboard sobre vendas de uma empresa fictícia.
 
 
-![Dashboard](Dashboard.png)
+![Dashboard](Dashboard.PNG)
