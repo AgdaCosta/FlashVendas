@@ -62,12 +62,12 @@ acumulado = function(new, aux){
 
 Dashboard {data-icon="fa-tachometer"}
 ======================================================================
-Row {data-height=350}
+Row 
 -----------------------------------------------------------------------
 
 
 ```{r}
-selectInput(inputId = "filtro_ano", "Ano", choices = unique(dados$ano), selected = "NA")
+selectInput("filtro_ano", "Ano", choices = unique(dados$ano), selected = "NA")
 selectInput(inputId = "filtro_mes", "Mês", choices = unique(dados$mes))
 selectInput(inputId = "filtro_dia", "Dia", choices = unique(dados$dia))
 selectInput(inputId = "filtro_supervisor", "Supervisor", choices = unique(dados$NomeSupervisor))
@@ -80,17 +80,20 @@ selectInput(inputId = "filtro_loja", "Loja", choices = unique(dados$NomeLoja) )
 
 
 
-Row {data-width=500}
+Row {.sidebardata-height=900}
 -----------------------------------------------------------------------
 
-### Qtd. Tickets {.value-box}
+### Qtd. Tickets 
 
-```{r}
-df = dados %>% filter(TipoCupom == 'Troca') %>% select(TicketPK) %>% unique()
-df = length(unique(dados$TicketPK)) - length(df$TicketPK)
-flexdashboard::valueBox(df, 
+```{r  }
+library(flexdashboard)
+
+k1 = dados %>% filter(TipoCupom == 'Troca') %>% select(TicketPK) %>% unique()
+k1 = length(unique(dados$TicketPK)) - length(k1$TicketPK)
+
+flexdashboard::valueBox(k1, 
                         caption = "Qtd. Tickets",
-                        color = "#0082bfff",
+                        color = "#4169E1",
                         icon = "fa-tags")
 
 
@@ -99,10 +102,13 @@ flexdashboard::valueBox(df,
 
 ### Qtd. Peças {.value-box}
 ```{r}
-df = sum(dados$`Qtd. Venda`) - sum(dados$`Qtd. Troca`)
-flexdashboard::valueBox(df, 
+library(flexdashboard)
+
+k2 = sum(dados$`Qtd.Venda`) - sum(dados$`Qtd.Troca`)
+
+flexdashboard::valueBox(k2, 
                         caption = "Qtd. Peças",
-                        color = "#ff4242ff",
+                        color = "#DC143C",
                         icon = "fa-tshirt")
 
 ```
@@ -110,12 +116,14 @@ flexdashboard::valueBox(df,
 
 ###  Ticket Médio {.value-box}
 ```{r}
-df = sum(dados$TicketMedio)
-df = paste('R$', df , sep = ' ')
+library(flexdashboard)
+
+k3 = sum(dados$TicketMedio) 
+k3 = paste('R$' ,k3, sep = ' ')
 
 
   
-flexdashboard::valueBox(df, 
+flexdashboard::valueBox(k3, 
                         caption = "Ticket Médio",
                         color = "#0c9c7bff",
                         icon = "fa-tag")
@@ -125,25 +133,27 @@ flexdashboard::valueBox(df,
 
 ###  Venda Loja {.value-box}
 ```{r}
-df = sum(dados$VendaLoja)
-df = paste('R$', df , sep = ' ')
+library(flexdashboard)
 
-flexdashboard::valueBox(df, 
+k4 = sum(dados$VendaLoja)
+k4 = paste('R$', k4 , sep = ' ')
+
+flexdashboard::valueBox(k4, 
                         caption = "Venda Loja",
-                        color = "#8080c0ff",
+                        color = "#A9A9A9",
                         icon = "fa-shopping-cart")
 
 ```
 
-###  Venda OMNI {.value-box}
+###  Venda Online {.value-box}
 ```{r}
+library(flexdashboard)
+k5 =  sum(dados$ValorOMNI)
+k5 = paste('R$', k5 , sep = ' ')
 
-df =  sum(dados$ValorOMNI)
-df = paste('R$', df , sep = ' ')
-
-flexdashboard::valueBox(df, 
-                        caption = "Venda OMNI",
-                        color = "#ff8040ff",
+flexdashboard::valueBox(k5, 
+                        caption = "Venda Online",
+                        color = "#FF8C00",
                         icon = "fa-money-bill-wave")
 
 
@@ -154,15 +164,17 @@ flexdashboard::valueBox(df,
 
 
 
-Row {data-height=1350}
+Row {data-height=1300}
 -------------------------------------
     
 ### Venda Loja por Hora
 ```{r}
 
-df = dados %>% group_by(Hora) %>% summarise(total = currency(sum(VendaLoja)), Meta = sum(Meta))
+g1 = dados %>% group_by(Hora) %>% summarise(
+                                             total = currency(sum(VendaLoja))
+                                            )
     
-    plot_ly(df, x = ~Hora, y = ~total,
+    plot_ly(g1, x = ~Hora, y = ~total,
         color = 'green',
         type = 'scatter', 
         mode = 'lines+markers',
@@ -180,9 +192,10 @@ df = dados %>% group_by(Hora) %>% summarise(total = currency(sum(VendaLoja)), Me
 
 ### Ticket Médio por hora
 ```{r}
-df = dados %>% group_by(Hora) %>% summarise(total = currency(sum(VendaLoja)), Meta = sum(Meta))
+g2 = dados %>% group_by(Hora) %>% summarise(
+                              total = round(sum(TicketMedio),digits = 2))
     
-    plot_ly(df, x = ~Hora, y = ~total,
+    plot_ly(g2, x = ~Hora, y = ~total,
         color = 'green',
         type = 'scatter', 
         mode = 'lines+markers',
@@ -199,27 +212,56 @@ df = dados %>% group_by(Hora) %>% summarise(total = currency(sum(VendaLoja)), Me
 ```
 
 
-Row {data-height=1350}
+Row {data-height=1600}
 -------------------------------------
-    
-### Valor Total acumulado X Meta
-```{r}
-df = dados %>% group_by(Hora) %>% 
+
+```{r , include=FALSE}
+g3 = dados %>% group_by(Hora) %>% 
             summarise( aux = sum(VendaTotal),
                        total = 0 ,
                        Meta = sum(Meta) )
 
-df$total = acumulado( new = df$total, aux = df$aux  )
+g3$total = acumulado( new = g3$total, aux = g3$aux  )
 
-plot_ly(df, x = ~Hora, y = ~total,
+```
+    
+### Valor Total acumulado X Meta
+```{r}
+
+ plot_ly(g3, x = ~Hora, y = ~total,
+        color = 'Venda',
+        type = 'scatter', 
+        mode = 'lines+markers',
+        line = list(color = 'green')) %>%
+    
+  layout(title = "",
+                 yaxis = list(title = "Venda Acumulada(R$)"),
+                 xaxis = list(title = "Hora"),
+                 legend = list(x = 5, y = 12),
+                 hovermode = "compare"
+         ) %>% 
+  add_trace(y = max(sum(g3$Meta)), name = 'Meta', mode = 'lines', 
+                 line = list(color = 'rgb(205, 12, 24)'))
+
+
+```
+
+### (%) Meta por Loja
+```{r}
+g4 = dados %>% group_by(NomeLoja) %>% 
+            summarise( aux = sum(VendaTotal),
+                       total = round(sum(perc_Meta),digits = 2) ,
+                       Meta = sum(Meta) )
+
+ plot_ly(g4, x = ~NomeLoja, y = ~total,
         color = 'green',
         type = 'scatter', 
         mode = 'lines+markers',
         line = list(color = 'green')) %>%
     
   layout(title = "",
-                 yaxis = list(title = "Venda Total Acumulada(R$)"),
-                 xaxis = list(title = "Hora"),
+                 yaxis = list(title = "Meta (%)"),
+                 xaxis = list(title = "Loja"),
                  legend = list(x = 5, y = 12),
                  hovermode = "compare"
          )
@@ -227,20 +269,17 @@ plot_ly(df, x = ~Hora, y = ~total,
 
 ```
 
-### (%) Meta por Loja
-```{r}
-```
-
 ### Tabela
 ```{r}
-df = dados %>%
+t = dados %>%
   select(NomeLoja, ValorVenda, Meta, ValorTroca) %>%
   group_by(NomeLoja) %>%
-  summarise('Total Venda'=sum(ValorVenda),
-            'Meta'=sum(Meta),
-            'Total Troca'=sum(ValorTroca)
+  summarise('Total Venda (R$)'= sum(ValorVenda),
+            'Meta (R$) '=sum(Meta),
+            'Total Troca (R$) '=sum(ValorTroca)
             )
-tabela(df, dom = 't')
+
+tabela(t, dom = 't')
 
 
 ```
@@ -268,7 +307,7 @@ Row {data-height=1750}
 
 ### Lojas
 ```{r}
-df = dados %>%
+t1 = dados %>%
   select(LojaPK, NomeLoja, TicketMedio, TipoCupom, ValorVenda, ValorOMNI, VendaTotal) %>%
   group_by(LojaPK, NomeLoja) %>%
   summarise('Total Venda'=sum(ValorVenda),
@@ -276,49 +315,49 @@ df = dados %>%
             'Total'=sum(VendaTotal)
             )
 
-tabela(df)
+tabela(t1)
 ```
 
 ### Vendedores
 ```{r}
-df = dados %>%
+t2 = dados %>%
   select(NomeVendedor, TicketMedio, TipoCupom, ValorVenda, ValorOMNI, VendaTotal) %>%
   group_by(NomeVendedor) %>%
   summarise('Total Venda'=sum(ValorVenda),
             'Total OMNI'=sum(ValorOMNI),
             'Total'=sum(VendaTotal)
             )
-tabela(df)
+tabela(t2)
 
 
 ```
 
 
-Row {data-height=1750}
+Row {data-height=1900}
 -----------------------------------------------------------------------
 
 ### Clientes
 ```{r}
-df = dados %>%
+t3 = dados %>%
   select(NomeCliente, ValorVenda) %>%
   group_by(NomeCliente) %>%
   summarise('Total Venda'=sum(ValorVenda)
             
             )
-tabela(df)
+tabela(t3)
 
 
 ```
 
 ### Produtos
 ```{r}
-df = dados %>%
+t4 = dados %>%
   select(ProdutoPK, Produto, TicketMedio, ValorVenda) %>%
   group_by(ProdutoPK, Produto) %>%
   summarise('Total Venda'=sum(ValorVenda)
             
             )
-tabela(df)
+tabela(t4)
 
 
 ```
@@ -347,7 +386,7 @@ Row {data-height=3500}
 ### Tabela 
 
 ```{r}
-df = dados %>%
+t5 = dados %>%
   select(NomeLoja, TicketMedio, TipoCupom, ValorVenda, ValorOMNI, VendaTotal, Meta, perc_Meta, HoraCompleta) %>%
   group_by(NomeLoja) %>%
   summarise('Total Venda'=sum(ValorVenda),
@@ -361,7 +400,7 @@ df = dados %>%
             
             
             )
-tabela(df)
+tabela(t5)
 
 ```
 
