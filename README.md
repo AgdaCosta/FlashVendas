@@ -13,4 +13,4 @@ Dashboard sobre vendas de uma empresa fictícia.
 #### **Modelo**
 
 
-![modelo]{modelo.png}
+![modelo](modelo.png)
