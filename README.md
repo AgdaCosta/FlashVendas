@@ -2,13 +2,13 @@
 Dashboard sobre vendas de uma empresa fictícia.
 
 #### **Dashboard**
-![dashboard](dashboard.png)
+![dashboard](dashboard.PNG)
 
 #### **Sintético**
-![sintetico](sintetico.png)
+![sintetico](sintetico.PNG)
 
 #### **Analítico**
-![analitico](analitico.png)
+![analitico](analitico.PNG)
 
 #### **Modelo**
 
