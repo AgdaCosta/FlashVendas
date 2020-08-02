@@ -169,16 +169,11 @@ Row {data-height=1300}
     
 ### Venda Loja por Hora
 ```{r}
-<<<<<<< HEAD
+
 library(dplyr)
 g1 = dados %>% group_by(Hora) %>% summarise(
-                                             total = sum(VendaLoja)
-=======
+                                             total = sum(VendaLoja))
 
-g1 = dados %>% group_by(Hora) %>% summarise(
-                                             total = currency(sum(VendaLoja))
->>>>>>> b829cd07a7231dd544e33124028016244e120534
-                                            )
     
     plot_ly(g1, x = ~Hora, y = ~total,
         color = 'green',
