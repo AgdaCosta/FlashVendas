@@ -36,19 +36,19 @@ loja = read.csv( text = loja, dec = ',', header = T, sep = "," )
 #_______________________________________________________________________________________________________
 #           Manipulando dados
 #-------------------------------------------------------------------------------------------------------
-vendedor = subset(vendedor,select = - c(LojaPK)) #Excluindo campos não utilizados
+vendedor = subset(vendedor,select = - c(LojaPK)) #Excluindo campos n?o utilizados
 supervisor = subset(supervisor,select = - c(LojaPK))
 fato = subset(fato , select = -c(Key))
 
-fato$ValorTroca = fato$ValorTroca %>% accounting() #Tratamento dos campos de valor para formato 0.00
-fato$ValorOMNI = fato$ValorOMNI  %>% accounting()
-fato$ValorVenda = fato$ValorVenda %>% accounting()
-fato$Meta = fato$Meta  %>% accounting()
+fato$ValorTroca = fato$ValorTroca %>% accounting( big.mark = ",") #Tratamento dos campos de valor para formato 0.00
+fato$ValorOMNI = fato$ValorOMNI  %>% accounting( big.mark = ",")
+fato$ValorVenda = fato$ValorVenda %>% accounting( big.mark = ",")
+fato$Meta = fato$Meta  %>% accounting( big.mark = ",")
 
 
 fato$Data = dmy(fato$Data) #Troca de data de ano-mes-dia para dia-mes-ano
 
-fato = fato %>% #Criação de novos campos
+fato = fato %>% #Cria??o de novos campos
   dplyr::mutate( dia = day(Data),
                  mes = factor(month(Data),levels = c(1,2,3,4,5,6,7,8,9,10,11,12),
                         labels = c("Jan", "Fev", "Mar", "Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez")) ,
@@ -57,14 +57,14 @@ fato = fato %>% #Criação de novos campos
                  VendaTotal = ValorVenda - ValorTroca + ValorOMNI,
                  VendaTotalAcumulado = 0,
                  PMV = VendaLoja / length(unique(fato$TicketPK)),
-                 diferença_meta = VendaLoja - Meta,
+                 diferenca_meta = VendaLoja - Meta,
                  perc_Meta =  1-(VendaLoja/sum(Meta)),
                  TicketMedio = VendaLoja / (  (length(unique(fato$TicketPK))) -  (
                    length((unique(select(filter(fato, TipoCupom == 'Troca'), TicketPK)))$TicketPK)  )
                  )
                )  
 
-acumulado = function(new, aux){ #Função para calcular acumulado
+acumulado = function(new, aux){ #Fun??o para calcular acumulado
   i = 1
   soma = 0
   n = length(new)
@@ -100,7 +100,7 @@ bancoFK = bancoPK %>% #Relacionando as chaves Pk de cada tabela com sua correspo
 banco = bancoFK
 
 #_______________________________________________________________________________________________________
-#         Visualização do Modelo de dados
+#         Visualiza??o do Modelo de dados
 #-------------------------------------------------------------------------------------------------------
 banco %>%
        dm_set_colors( "#5986C4" = fato) %>%
@@ -108,13 +108,13 @@ banco %>%
 
 
 #_______________________________________________________________________________________________________
-#         União dos dados 
+#         Uni?o dos dados 
 #-------------------------------------------------------------------------------------------------------
 
 dados = banco %>%
               dm_flatten_to_tbl(fato) 
 
-rm(list=setdiff( ls(), "dados" ) ) #Remoção de todos os anteriores menos a tabela Dados 
+rm(list=setdiff( ls(), "dados" ) ) #Remo??o de todos os anteriores menos a tabela Dados 
 
 
 #_______________________________________________________________________________________________________
